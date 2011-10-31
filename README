@@ -1,0 +1,23 @@
+RoadMap - 10/31/2011
+
+0.6 - create basic storage node, meetadata node, and client, which will
+      allow basic functionality needed for a basic distributed file system.
+
+0.8 - include fault tolerance via zfec library.
+
+1.0 - all features implemented are considered stable.
+
+1.2 - create rebalancer/healer node which will analyse how segments are
+      stored and recreates any missing/lost segments, and rebalance
+      segments so that no single node contains much more than the average
+      number of segments.
+
+1.4 - remove metadata node single point of failure, by using a master-slave
+      model.
+
+1.6 - add fuse functionality so that the file system can be mounted under linux
+
+1.8 - implement binary delta compression, so that only small segments of
+      a file are changed, and not the whole file.
+
+2.0 - all functions are considered stable.
