@@ -20,4 +20,9 @@ RoadMap - 10/31/2011
 1.8 - implement binary delta compression, so that only small segments of
       a file are changed, and not the whole file.
 
-2.0 - all functions are considered stable.
+2.0 - all functions implemented are considered stable.
+
+2.2 - add encryption capabilities and allow ability to remove filenames
+      from metadata node and store those locally so that other
+      untrusted nodes cannot read sensitive data.
+
