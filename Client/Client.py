@@ -5,13 +5,17 @@ import sys
 sys.path.append("libs")
 import ParseCommandLine
 
+sys.path.append("../Common/")
+import Config
 
-_url="127.0.0.1:9696"
-_pcl=ParseCommandLine.ParseCommandLine(_url)
+_config=Config.Config()
+_mdn=_config.get_MetaDataNodes()
+
+#_url="127.0.0.1:9696"
+_pcl=ParseCommandLine.ParseCommandLine(_mdn)
 print(_pcl.process_command(sys.argv))
 sys.exit()
 
-sys.path.append("../Common/")
 import AssembleFile
 
 _id="15e376e0695c9cb97aed2499e8452f288d2f24d4"

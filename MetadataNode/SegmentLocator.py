@@ -2,13 +2,13 @@ import urllib.request
 import json, time
 import collections
 import os, sys
-sys.path.append("../Common")
+#sys.path.append("../Common")
 
 import sqlite3
 
 class SegmentLocator:
-   def __init__(self):
-       self._db_name="MDN.db"
+   def __init__(self, DBFile="MDN.db"):
+       self._db_name=DBFile
        self._ip_addr2nodeID={}
        self._nodeID2ip_addr={}
        self._last_contact=collections.defaultdict(int)

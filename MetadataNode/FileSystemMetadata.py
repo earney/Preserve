@@ -1,24 +1,28 @@
 #!/usr/bin/env python3
 
 import os, json
-import DB
 import time
 import hashlib
 
 import sys
 sys.path.append("../Common")
+import DB
 from SegmentStorage import SegmentStorage as FileMetadataStorage
 
 class FileSystemMetadata:
-   def __init__(self, rootID=0, encrypted=False, seed="seed"):
+   def __init__(self, rootID=0, encrypted=False, 
+                seed="seed", metadataDir="./MetaData",
+                DBFile="/tmp/FS.db"):
        self._seed=seed
        self._encrypted=encrypted
        self._rootID=rootID
+       self._metadataDir=metadataDir
+       self._DBFile=DBFile
 
-       self._file_metadata=FileMetadataStorage("./MetaData", 10*1024*1024)
+       self._file_metadata=FileMetadataStorage(self._metadataDir, 10*1024*1024)
 
-       if os.path.exists("/tmp/FS.db"):
-          self._db=DB.DB("/tmp/FS.db")
+       if os.path.exists(self._DBFile):
+          self._db=DB.DB(self._DBFile)
 
           self._db.execute("select max(id) from attributes")
           self._maxID,=self._db.fetchone()
@@ -28,8 +32,8 @@ class FileSystemMetadata:
           self._root,=self._db.fetchone()
        else:
           self._maxID=0
-          print("creating FS.db")
-          self._db=DB.DB("/tmp/FS.db")
+          print("creating %s" % self._DBFile)
+          self._db=DB.DB(self._DBFile)
           self._db.ExecuteQuery("""create table attributes (
                                      id bigint,
                                      shaID text,

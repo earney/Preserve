@@ -17,12 +17,17 @@ import hashlib
 import sys
 sys.path.append("../Common")
 import misc
+import Config
 
-_base_path='/tmp/MyGrid'
+_config=Config.Config()
+#_base_path='/tmp/MyGrid'
+_sldb=_config.get_SegmentLocatorDB()
+_fsdir=_config.get_MDN_FileSystemDirectory()
+_fsdb=_config.get_MDN_FileSystemDB()
 
-_segmentLocator=SegmentLocator.SegmentLocator()
-_fsmetadata=FileSystemMetadata.FileSystemMetadata()
-#_filemetadata=FileSystemMetadata.FileMetadata()
+_segmentLocator=SegmentLocator.SegmentLocator(_sldb)
+_fsmetadata=FileSystemMetadata.FileSystemMetadata(metadataDir=_fsdir, 
+                                                  DBFile=_fsdb)
 
 def MetadataNode(environ, start_response):
     _path_info=environ["PATH_INFO"]
@@ -154,13 +159,17 @@ def contact_ServerNodes(interval):
        time.sleep(interval)
 
 
+_config=Config.Config()
+_address=_config.get_MetaDataNode()
+_mdn, _port=_address.split(':')
+
 import threading
 _t=threading.Timer(10, contact_ServerNodes, [10])
 _t.start()
 
 try:
-  httpd = make_server('', 9696, MetadataNode)
-  print("Serving on port 9696...")
+  httpd = make_server(_mdn, _port, MetadataNode)
+  print("Serving on port %s..." % _port)
   httpd.serve_forever()
 except KeyboardInterrupt:
   pass
