@@ -3,7 +3,7 @@ import os
 
 class SegmentStorage:
    def __init__(self, base_path, quota):
-       self._base_path=base_path
+       self._base_path=os.path.expanduser(base_path)
        self._quota=quota
 
        if not os.path.exists(self._base_path):

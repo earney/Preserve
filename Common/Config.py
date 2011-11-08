@@ -1,15 +1,20 @@
-import configparser
+import configparser, os
 
 # config file "~/.preserve/.config
-# [MetaDataNodes]
-# Address=127.0.0.1:123,MyMDN:456,YourMDN:987
-#
-# [Local]
-# StorageNodeAddress=MyIpAddress:6363
+#[Grid]
+#MetaDataNodeAddresses=127.0.0.1:9696
 
+#[StorageNode]
+#Address=127.0.0.1
+#Port=9695
+
+#[MetaDataNode]
+#Address=127.0.0.1
+#Port=9696
 
 class Config:
   def __init__(self, filename="~/.preserve/.config"):
+      filename=os.path.expanduser(filename)
       self._parser=configparser.SafeConfigParser()
       self._parser.read(filename)
 
@@ -56,14 +61,14 @@ class Config:
       else:
          self._FileSystemDB="~/.preserve/FS.db"
 
-  def get_MetaDataNodes(self):
-      return self._MetaDataNodes
+  def get_MetadataNodes(self):
+      return self._MetadataNodes
 
   def get_SN_Address(self):
       return self._StorageNodeAddress, self._StorageNodePort
 
   def get_MDN_Address(self):
-      return self._MetaDataNodeAddress, self._MetaDataNodePort
+      return self._MetadataNodeAddress, self._MetadataNodePort
 
   def get_MDN_SegmentLocatorDB(self):
       return self._SegmentLocatorDB

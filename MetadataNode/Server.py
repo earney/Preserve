@@ -21,7 +21,7 @@ import Config
 
 _config=Config.Config()
 #_base_path='/tmp/MyGrid'
-_sldb=_config.get_SegmentLocatorDB()
+_sldb=_config.get_MDN_SegmentLocatorDB()
 _fsdir=_config.get_MDN_FileSystemDirectory()
 _fsdb=_config.get_MDN_FileSystemDB()
 
@@ -159,16 +159,14 @@ def contact_ServerNodes(interval):
        time.sleep(interval)
 
 
-_config=Config.Config()
-_address=_config.get_MetaDataNode()
-_mdn, _port=_address.split(':')
+_mdn, _port=_config.get_MDN_Address()
 
 import threading
 _t=threading.Timer(10, contact_ServerNodes, [10])
 _t.start()
 
 try:
-  httpd = make_server(_mdn, _port, MetadataNode)
+  httpd = make_server(_mdn, int(_port), MetadataNode)
   print("Serving on port %s..." % _port)
   httpd.serve_forever()
 except KeyboardInterrupt:

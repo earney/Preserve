@@ -8,7 +8,7 @@ import sqlite3
 
 class SegmentLocator:
    def __init__(self, DBFile="MDN.db"):
-       self._db_name=DBFile
+       self._db_name=os.path.expanduser(DBFile)
        self._ip_addr2nodeID={}
        self._nodeID2ip_addr={}
        self._last_contact=collections.defaultdict(int)
@@ -16,6 +16,9 @@ class SegmentLocator:
 
        if os.path.exists(self._db_name):
           os.remove(self._db_name)
+
+       if not os.path.exists(os.path.basename(self._db_name)):
+          os.mkdir(os.path.basename(self._db_name))
 
        _db=sqlite3.connect(self._db_name)
        _conn=_db.cursor()

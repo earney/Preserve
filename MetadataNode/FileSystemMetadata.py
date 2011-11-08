@@ -16,8 +16,8 @@ class FileSystemMetadata:
        self._seed=seed
        self._encrypted=encrypted
        self._rootID=rootID
-       self._metadataDir=metadataDir
-       self._DBFile=DBFile
+       self._metadataDir=os.path.expanduser(metadataDir)
+       self._DBFile=os.path.expanduser(DBFile)
 
        self._file_metadata=FileMetadataStorage(self._metadataDir, 10*1024*1024)
 
