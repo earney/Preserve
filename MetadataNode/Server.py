@@ -71,7 +71,7 @@ def MetadataNode(environ, start_response):
           return [json.dumps(_result).encode('utf-8')]
        elif _cmd.startswith('/Name2ID/'):
           _name=_cmd[9:]
-          print(_name)
+          #print(_name)
           _result=_fsmetadata.lookupID(_name)
           print(_result)
           if _result is None:
@@ -85,25 +85,25 @@ def MetadataNode(environ, start_response):
           start_response('200 OK', [('Content-type', 'text/plain')])
           return [json.dumps(_result).encode('utf-8')]
        elif _cmd.startswith('/mkdir/'):
-          _parentid, _name_id, _name=_cmd[7:].split('/', 3)
+          _parentid, _name_id, _name=_cmd[7:].split('/', 2)
+          print(_parentid, _name_id, _name)
           _result=_fsmetadata.mkdir(_parentid, _name_id, _name)
           if _result is None:
              start_response('200 OK', [('Content-type', 'text/plain')])
+             _result=''
           else:
+             print(_result)
              start_response('404 OK', [('Content-type', 'text/plain')])
           return [json.dumps(_result).encode('utf-8')]
        elif _cmd.startswith('/putfile/'):
-          _dir_id, _file_name=_cmd[9:].split('/')
-          #print(_dir_id, _file_name)
+          _parentID, _file_name=_cmd[9:].split('/',1)
           _file_metadata=misc.get_wsgi_file_contents(environ)
           #get file metadata
           if _file_metadata is not None:
-             _sha1=hashlib.new('sha1')
-             _sha1.update(_file_metadata)
-             _shaID=_sha1.hexdigest()
+             _shaID=misc.get_shaID(_file_metadata)
              _size=0
 
-             _result=_fsmetadata.putfile(_dir_id, _shaID, _file_name, _size)
+             _result=_fsmetadata.putfile(_parentID, _shaID, _file_name, _size)
              #print(_result)
              if _result is None:
                 #_metadata=json.loads(_file_metadata.decode('utf-8'))

@@ -103,11 +103,12 @@ class FileSystemMetadata:
        return self._file_metadata.Get(shaID)
 
    def listdir(self, id):
+       _parentid=self._shaID2fileID(id)
        self._db.ExecuteQuery("""select id, shaID, type, name, modified, size
                                   from directory_contents a,
                                        attributes b
                                  where a.childID=b.id
-                                   and a.parentID=?""", (id,))
+                                   and a.parentID=?""", (_parentid,))
 
        _list=[]
        for _id, _shaID, _type, _name, _modified, _size, in self._db:
@@ -223,7 +224,7 @@ class FileSystemMetadata:
        if _id is None:
           return None
 
-       if len(dirlist)==1: return self._fileID2ShaID(_id)
+       if len(dirlist)==1: return self._fileID2shaID(_id)
 
        return self._traverse_path(dirlist[1:], _id)
 
@@ -235,7 +236,7 @@ class FileSystemMetadata:
        while _dirs[0] == '' and len(_dirs) > 1:
           _dirs=_dirs[1:]
 
-       return self._traverse_path(_dirs, self._root)
+       return self._traverse_path(_dirs)
 
    def get_fileID(self, dir_id, shaID):
        self._db.execute("""select b.id

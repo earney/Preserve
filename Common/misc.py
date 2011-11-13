@@ -3,6 +3,7 @@ import urllib.request
 
 import gzip
 import json
+import hashlib
 
 def get_wsgi_file_contents(environ):
     _body=None
@@ -38,7 +39,7 @@ def access_url(url, data=None):
       return _data
     except urllib.error.HTTPError as e:
       print("HTTP Error:",e.code , url)
-      return _data
+      return None
     except urllib.error.URLError as e:
       print("URL Error:",e.reason , url)
 
@@ -52,3 +53,8 @@ def send_compressed_response(results):
 def receive_compressed_response(results):
     _json=gzip.decompress(results)
     return json.loads(_json.decode('utf-8'))
+
+def get_shaID(str):
+    _sha=hashlib.new('sha1')
+    _sha.update(str)
+    return _sha.hexdigest()

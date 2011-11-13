@@ -9,7 +9,7 @@ sys.path.append("../Common/")
 import Config
 
 _config=Config.Config()
-_mdn=_config.get_MetaDataNodes()
+_mdn=_config.get_MetadataNodes()
 
 #_url="127.0.0.1:9696"
 _pcl=ParseCommandLine.ParseCommandLine(_mdn)

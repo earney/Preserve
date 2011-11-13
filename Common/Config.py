@@ -24,7 +24,7 @@ class Config:
          sys.exit()
 
       _address=self._parser.get('Grid', 'MetaDataNodeAddresses')
-      self._MetaDataNodes=_address.split(',')
+      self._MetadataNodes=_address.split(',')
 
       if self._parser.has_option('StorageNode', 'Address'):
          self._StorageNodeAddress=self._parser.get('StorageNode', 'Address')

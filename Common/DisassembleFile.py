@@ -100,11 +100,14 @@ class ZfecParameterCalculator:
 
 
 class DisassembleFile:
-   def __init__(self, filename, metadataNode, group_size=10*1024*1024):
+   def __init__(self, filename, parentID, grid_filename, 
+                metadataNode, group_size=10*1024*1024):
        self._filename=filename
        self._group_size=group_size
 
        self._metadataNode=metadataNode
+       self._parentID=parentID
+       self._grid_filename=grid_filename
 
        self._upload_file=UploadFile(metadataNode)
 
@@ -162,7 +165,10 @@ class DisassembleFile:
 
        _json=json.dumps(_metadata).encode('utf-8')
 
-       _url="http://%s/Client/putfile/%s/%s" % (self._metadataNode, 0, "Training_Academy.wmv")
+       _shaID=misc.get_shaID(_json)
+
+       _url="http://%s/Client/putfile/%s/%s" % (self._metadataNode, 
+                 self._parentID, self._grid_filename)
        _result=misc.access_url(_url, data=_json)
        return _result
 
