@@ -1,15 +1,18 @@
-import json
+import json, time
 import sys, os
 import hashlib
 
 import NameMapper
 #sys.path.append("../../Common")
 sys.path.append("../Common")
+import DisassembleFile
 import misc
 
 class ParseCommandLine:
-   def __init__(self, metadataNode, encryption=False, seed="myDIR"):
-       self._metadataNode=metadataNode
+   def __init__(self, metadataNodes, encryption=False, seed="myDIR"):
+       #for now default to first metadatanode in list but eventually create
+       #function to find working master metadata node, etc
+       self._metadataNode=metadataNodes[0]
        self._encryption=encryption
        self._seed=seed
        self._sys_args=[]
@@ -33,18 +36,14 @@ class ParseCommandLine:
        return "Error!, Command is not valid"
 
    def _valid_command(self, s):
-       if s in ('cd', 'ls', 'mkdir', 'rmdir'):
+       if s in ('cd', 'ls', 'mkdir', 'rmdir', 'cp'):
           return True
        return False 
 
    def _parse(self, command):
        if command=='ls':
           _result=self._ls_input()
-          try:
-            _result=int(_result)
-          except:
-            pass
-          if isinstance(_result, int): 
+          if isinstance(_result, str) and len(_result)==40: 
              return self._ls_output(_result)
           return _result
        elif command=='mkdir':
@@ -57,21 +56,24 @@ class ParseCommandLine:
           if _name is None:  #this is an Error!
              return "Error, you must provide a directory name"
           return self._dir_output("rmdir", _parentID, _name_id, _name)
+       elif command=='cp':
+          return self._cp_input()
        else:
           return "Error! command %s is not valid" % command
 
+   # this is has been replaced with misc.get_shaID
    def _calc_shaID(self, value):
        _sha1=hashlib.new('sha1')
        _sha1.update(value)
        return _sha1.hexdigest()
-
 
    def _dir_output(self, command, parentID, name_id, name):
        if self._encryption:
           name=None
        _url="http://%s/Client/%s/%s/%s/%s" % (self._metadataNode, command, parentID, name_id, name)
        _result=misc.access_url(_url)
-       print(_result)
+       if command in ('mkdir') and _result is None:
+          return None
        return json.loads(_result.decode('utf-8'))
 
    def _dir_input(self):
@@ -94,6 +96,34 @@ class ParseCommandLine:
           return _dir_id, _name_id, _dir_name
 
        return None, None, None
+
+
+   def _cp_input(self):
+       if len(self._sys_args) != 4:
+          return "Error.. invalid syntax!\nClient.py cp <source> <target>"
+
+       _source=self._sys_args[2]
+       _target=self._sys_args[3]
+
+       _cp_type=None
+       if _source.startswith("grid:/") and _target.startswith("grid:/"):
+          #grid to grid
+          #just have to copy metadata 
+          #_cp_type="gridtogrid"
+          pass
+       elif _source.startswith("grid:/"):
+          #copy file out of grid
+          #assemble
+          pass
+       elif _target.startswith("grid:/"):
+          #copy file into the grid
+          _target_dir, _target_name=os.path.split(_target[5:])
+          _parentID=self._lookup_id(_target_dir)
+          _df=DisassembleFile.DisassembleFile(_source, _parentID, _target_name, 
+                                              self._metadataNode)
+          return _df.process()
+
+       return "Error! source and/or target must start with grid:/"
 
 
    def _ls_input(self):
@@ -132,8 +162,12 @@ class ParseCommandLine:
                _dict=_items[_type][_dir]
                #size  modified time, name"
                #print(_dir)
-               _date_time='%s' % _items[_type][_dir]['modified']
-               _padding=' '*(15-len(_date_time))
+               try:
+                 _time_sec=int(_items[_type][_dir]['modified'])
+                 _date_time=time.ctime(_time_sec)
+               except:
+                 _date_time=''
+               _padding=' '*(25-len(_date_time))
                _str+="%s %s %10d %s %s %s\n" % (_type[0], _dict['id'], _dict['size'], _date_time, _padding, _dict['name'])
 
        return _str
