@@ -80,6 +80,8 @@ class DefaultNameMapper:
       self._metadataNode=metadataNode
 
   def Name2ID(self, name):
+      if name.startswith('grid:/'):
+         name=name[6:]
       _result=misc.access_url("http://%s/Client/Name2ID/%s" % (self._metadataNode, name))
       if _result is None: return None
       

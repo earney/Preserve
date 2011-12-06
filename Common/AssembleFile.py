@@ -60,16 +60,14 @@ class AssembleFile:
 
    def process(self, shaID, output_filename):
        _metadata=self._get_metadata(shaID)
-       print(_metadata)
-       print(len(_metadata))
 
        _fp=open(output_filename, "wb")
        for _group in _metadata:
            _locations=self._retrieve_segment_locations(_group['segments'])
 
            self._get_recovery_parameters(_group['recovery'])
-           _group_data=self._process_group(_group, _locations)
-           if _group_data is None:  # we have a problem, can't recover
+           _success, _group_data=self._process_group(_group, _locations)
+           if not _success:  # we have a problem, can't recover
               print("cannot recover group")
            else:
               _fp.write(_group_data)
@@ -116,14 +114,14 @@ class AssembleFile:
              _segments[-1]=_segments[-1][:-self._decoder_padding]
 
           #return data since recovery isn't needed
-          return b''.join(_segments)
+          return True, b''.join(_segments)
 
        #retrieve blocks to do recovery
        _recovery_segments=[]
        while _restore_segments != []:
              _segment=_restore_segments.pop(0)
 
-             for _nodeID in _locations[_segment]:
+             for _nodeID in locations[_segment]:
                  _data=misc.access_url("http://%s/GetSegment/%s" % (_nodeID, _segment))
 
                  if _data is not None:
@@ -135,12 +133,12 @@ class AssembleFile:
                  #if we have enough recovery blocks lets recover
                  if len(_retrieved_segments) >= _num_missing_segments:
                     _decoder=easyfec.Decoder(self._decoder_k, self._decoder_m)
-                    return b''.join(_decoder.decode(_segments + _recovery_segments, 
+                    return True, b''.join(_decoder.decode(_segments + _recovery_segments, 
                                            _retrieved_segments,
                                            self._decoder_padding))
 
        #give up, we cannot recover this segment group
-       return None, None
+       return False, 'Error! Cannot recover this group segment'
 
    def _is_verified(self, id, data):
        return id==FileVerifier.FileVerifier(data).hexdigest()

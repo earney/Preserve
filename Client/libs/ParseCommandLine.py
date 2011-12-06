@@ -36,6 +36,7 @@ class ParseCommandLine:
        return "Error!, Command is not valid"
 
    def _valid_command(self, s):
+       #todo add rm, mv
        if s in ('cd', 'ls', 'mkdir', 'rmdir', 'cp'):
           return True
        return False 
@@ -113,8 +114,11 @@ class ParseCommandLine:
           pass
        elif _source.startswith("grid:/"):
           #copy file out of grid
-          #assemble
-          pass
+          #lookup id of source file
+          _id=self._lookup_id(_source)
+          import AssembleFile
+          _as=AssembleFile.AssembleFile(self._metadataNode)
+          return _as.process(_id, _target)
        elif _target.startswith("grid:/"):
           #copy file into the grid
           _target_dir, _target_name=os.path.split(_target[5:])
@@ -134,7 +138,7 @@ class ParseCommandLine:
 
        if _dir.startswith('grid:/'):
           #we want to query our grid
-          _dir_id=self._lookup_id(_dir[5:])          
+          _dir_id=self._lookup_id(_dir[5:])
           if _dir_id is None:
              return "Error, directory %s doesn't exist" % _dir
           return _dir_id
