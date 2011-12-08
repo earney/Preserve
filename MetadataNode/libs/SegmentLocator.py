@@ -127,7 +127,8 @@ class SegmentLocator:
            try:
              _ipaddr=self._nodeID2ip_addr[_nodeID]
              _list[_ipaddr]={'free': _free, 'used': _used,
-                             'timestamp': _timestamp}
+                             'number_segments': '0',
+                             'timestamp': _timestamp, 'name': _ipaddr}
            except:
              print("dont know ip address of node %s" % _nodeID)
              pass

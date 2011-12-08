@@ -1,0 +1,30 @@
+<html>
+<head>
+  <title>Preserve Monitor</title>
+
+</head>
+
+<body>
+
+<table>
+  <thead><tr><th>Name/Ip Address</th>
+             <th>Last Seen</th>
+             <th>Number of Segments</th>
+             <th>Free Space</th>
+             <th>Used Space</th>
+         </tr>
+  </thead>
+  <tbody>
+     <py-open code="for node in nodes:"/>
+        <tr>
+        <py-open>for var in ('name', 'timestamp', 'number_segments', 'free', 'used'):</py-open>
+           <td> <py-expr>node[var]</py-expr> </td>
+        <py-close/>
+        </tr>
+     <py-close/>
+  </tbody>
+</table>
+
+Last updated: $last_updated
+</body>
+</html>

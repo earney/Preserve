@@ -8,13 +8,17 @@
 from wsgiref.simple_server import make_server
 from cgi import parse_qs, escape
 
-import json, time
-import SegmentLocator
-import FileSystemMetadata
+import json, time, datetime
 import io
 import hashlib
+import io
 
 import sys
+sys.path.append("libs")
+import XYAPTU
+import SegmentLocator
+import FileSystemMetadata
+
 sys.path.append("../Common")
 import misc
 import Config
@@ -46,6 +50,34 @@ def MetadataNode(environ, start_response):
     #   # syntax /Register/ipaddr:port/
     #   _ipaddr=_path_info[22:]
     #   self._metadataNodes.refresh(_ipaddr)
+    elif _path_info.startswith('/Monitor'):
+       #return a nice looking page with basic info such as
+       #the number of storage nodes, the number of segments
+       #each is storing, the last time they checked in, etc
+       #try:
+       #  _template_file=_path_info[9:]
+       #except:
+       _template_file="default.tmpl"
+
+       _fp=open("templates/%s" % _template_file, "r")
+       _nodes_dict=_segmentLocator.get_statistics()
+       _nodes=[]
+       for _node in _nodes_dict.keys():
+           _nodes.append(_nodes_dict[_node])
+       def _get(d, key):
+           try:
+             return d[key]
+           except:
+             return "missing"
+
+       _data={'last_updated': datetime.datetime.now(),
+              'get': _get,
+              'nodes': _nodes}
+       _out=io.StringIO()
+       _tmpl=XYAPTU.xcopier(_data, ouf=_out)
+       _tmpl.xcopy(_fp)
+       start_response('200 OK', [('Content-type', 'text/html')])
+       return [_out.getvalue().encode('utf-8')]
     elif _path_info.startswith('/Client'):
        #this is from a client that will want certain information
        #command list (listdir, rmdir, mkdir)
