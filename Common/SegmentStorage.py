@@ -27,6 +27,7 @@ class SegmentStorage:
        return _sha1.hexdigest()==segmentID
 
    def Put(self, segmentID, data):
+       print(segmentID)
        if self.ValidateSegment(segmentID, data):
           _filename=self._segment_location(segmentID)
           self._validate_path(os.path.dirname(_filename))

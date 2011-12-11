@@ -23,7 +23,6 @@ class AssembleFile:
        #print(isinstance(_result, bytes))
        _metadata=misc.receive_compressed_response(_result)
        #return _metadata.decode('utf-8')
-       import json
        return json.loads(_metadata)
 
    def _parse_metadata_for_segments(self, metadata):

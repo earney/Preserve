@@ -1,6 +1,6 @@
 import urllib.error 
 import urllib.request
-
+import datetime
 import gzip
 import json
 import hashlib
@@ -58,3 +58,45 @@ def get_shaID(str):
     _sha=hashlib.new('sha1')
     _sha.update(str)
     return _sha.hexdigest()
+
+
+def convert_bytes(bytes):
+    """convert bytes into human readable format"""
+
+    bytes = float(bytes)
+    if bytes >= 1099511627776:
+        terabytes = bytes / 1099511627776
+        size = '%.2fT' % terabytes
+    elif bytes >= 1073741824:
+        gigabytes = bytes / 1073741824
+        size = '%.2fG' % gigabytes
+    elif bytes >= 1048576:
+        megabytes = bytes / 1048576
+        size = '%.2fM' % megabytes
+    elif bytes >= 1024:
+        kilobytes = bytes / 1024
+        size = '%.2fK' % kilobytes
+    else:
+        size = '%.2fb' % bytes
+    return size
+
+def convert_delta_time(sec):
+    """convert number of seconds to human readable format"""
+    _sec=float(sec)
+    if _sec >= 24*3600:
+        return '%.2f days' % (_sec/24/3600)
+    elif _sec >= 3600:
+        return '%.2f hours' % (_sec/3600)
+    elif _sec >= 60:
+        return '%.2f minutes' % (_sec/60)
+
+    return "%.2f seconds" % _sec
+
+def convert_seconds(sec):
+    """convert seconds to YYYY-MM-DD HH:MI:SS"""
+    try:
+      _date=datetime.datetime.fromtimestamp(sec)
+    except:
+      return ''
+
+    return _date.isoformat(' ')

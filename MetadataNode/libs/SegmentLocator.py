@@ -163,18 +163,7 @@ class SegmentLocator:
 
        return _list
 
-   def _segment_list_compare(self, segment_list1, segment_list2):
-       _list=[]
-       for _id in segment_list1:
-           if _id not in segmenta_list2:
-              _list.append(_id)
-
-       return _list
-
-   def _missing_segments(self, metadata_segmentIDs):
-       """finds segment IDs in metadata, that are not stored in
-          any of our storage nodes, Houston, we have a problem!"""
-
+   def get_segment_list(self):
        _db=sqlite3.connect(self._db_name)
        _conn=_db.cursor()
 
@@ -187,25 +176,15 @@ class SegmentLocator:
 
        _conn.close()
 
-       self._segment_list_compare(self, metadata_segmentIDs, _segmentIDs)
+       return _segmentIDs
 
    def find_unclaimed_segments(self, metadata_segmentIDs):
        """find segments located on storage nodes that are not in
           any metadata files"""
 
-       _db=sqlite3.connect(self._db_name)
-       _conn=_db.cursor()
+       _segmentIDs=get_segment_list()
 
-       _conn.execute("""select distinct segmentID
-                          from storage_node_segments""")
-
-       _segmentIDs=[]
-       for _segmentID, in _conn:
-           _segmentIDs.append(_segmentID)
-
-       _conn.close()
-
-       return self._segment_list_compare(self, _segmentIDs, metadata_segmentIDs)
+       return self._segment_list_compare(_segmentIDs, metadata_segmentIDs)
 
    def refresh(self, ipaddr=None):
        if ipaddr is not None:

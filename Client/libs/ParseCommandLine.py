@@ -17,6 +17,8 @@ class ParseCommandLine:
        self._seed=seed
        self._sys_args=[]
 
+       #TODO: don't use a name mapper, encrypt name instead, that way
+       #only private key is necessary to have.
        self._name_mapper=NameMapper.NameMapper(encryption=encryption, metadataNode=self._metadataNode)
 
    def __del__(self):
@@ -37,7 +39,7 @@ class ParseCommandLine:
 
    def _valid_command(self, s):
        #todo add rm, mv
-       if s in ('cd', 'ls', 'mkdir', 'rmdir', 'cp'):
+       if s in ('cd', 'ls', 'mkdir', 'rmdir', 'cp', 'rm'):
           return True
        return False 
 
@@ -59,6 +61,8 @@ class ParseCommandLine:
           return self._dir_output("rmdir", _parentID, _name_id, _name)
        elif command=='cp':
           return self._cp_input()
+       elif command=='rm':
+          return self._rm_input()
        else:
           return "Error! command %s is not valid" % command
 
@@ -182,25 +186,39 @@ class ParseCommandLine:
        #it doesn't exist
        return self._name_mapper.Name2ID(path)
 
+   def _rm_input(self):
+       _filename=self._sys_args[2]
+       if not _filename.startswith('grid:/'):
+          return "Error! can only delete files in the grid"
+
+       return self._rm_file(_filename)
+
    def _rm_file(self, filename):
        _dirID, _shaID=self._lookup_fileID(filename)
        if _shaID is not None:
-          _url="http://%s/Client/rmfile/%s/%s" % (self._metadataNode, _dirID, _fileID)
+          _url="http://%s/Client/rmfile/%s/%s" % (self._metadataNode, _dirID, _shaID)
           _result=misc.access_url(_url)
-          _result=json.loads(_result.decode('utf-8'))
+          if _result is None:
+             _result=''
+          #_result=json.loads(_result.encode('utf-8'))
           return _result
        
        return "File does not exist."
 
    #todo
-   def _lookup_fileID(pathfile):
+   def _lookup_fileID(self, pathfile):
        #returns dirID and shaID of the file
        #look up fileID of the given pathfile(name)
-       pass
+       _target_dir, _target_name=os.path.split(pathfile[5:])
+       _parentID=self._lookup_id(_target_dir)
+       _shaID=self._lookup_id(pathfile[5:])
 
-   def _cp_object(self, object1, object2):
-       #get dirID (and possibliy shaID, if file) of object 1
-       pass
+       return _parentID, _shaID
+       
+
+   #def _cp_object(self, object1, object2):
+   #    #get dirID (and possibliy shaID, if file) of object 1
+   #    pass
 
 if __name__=='__main__':
    _pcl=ParseCommandLine("127.0.0.1:9696")

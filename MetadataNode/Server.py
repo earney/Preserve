@@ -30,7 +30,8 @@ _fsdir=_config.get_MDN_FileSystemDirectory()
 _fsdb=_config.get_MDN_FileSystemDB()
 
 _segmentLocator=SegmentLocator.SegmentLocator(_sldb)
-_fsmetadata=FileSystemMetadata.FileSystemMetadata(metadataDir=_fsdir, 
+_fsmetadata=FileSystemMetadata.FileSystemMetadata(metadataDir=_fsdir,
+                                                  segmentLocator=_segmentLocator,
                                                   DBFile=_fsdb)
 
 def MetadataNode(environ, start_response):
@@ -54,25 +55,25 @@ def MetadataNode(environ, start_response):
        #return a nice looking page with basic info such as
        #the number of storage nodes, the number of segments
        #each is storing, the last time they checked in, etc
-       #try:
-       #  _template_file=_path_info[9:]
-       #except:
-       _template_file="default.tmpl"
 
-       _fp=open("templates/%s" % _template_file, "r")
+       _fp=open("templates/default.tmpl", "r")
        _nodes_dict=_segmentLocator.get_statistics()
-       _nodes=[]
+       _storagenodes=[]
+       _mdn=[]
+       _missing_segments=[]
        for _node in _nodes_dict.keys():
-           _nodes.append(_nodes_dict[_node])
-       def _get(d, key):
-           try:
-             return d[key]
-           except:
-             return "missing"
+           _data=_nodes_dict[_node]
+           _data['timedelta']=misc.convert_delta_time(time.time() - _data['timestamp'])
+           _data['timestamp']=misc.convert_seconds(_data['timestamp'])
+           _data['free']=misc.convert_bytes(_data['free'])
+           _data['used']=misc.convert_bytes(_data['used'])
+           
+           _storagenodes.append(_nodes_dict[_node])
 
        _data={'last_updated': datetime.datetime.now(),
-              'get': _get,
-              'nodes': _nodes}
+              'storagenodes': _storagenodes,
+              'metadatanodes': _mdn,
+              'missingsegments': _fsmetadata.get_statistics()}
        _out=io.StringIO()
        _tmpl=XYAPTU.xcopier(_data, ouf=_out)
        _tmpl.xcopy(_fp)
@@ -142,6 +143,7 @@ def MetadataNode(environ, start_response):
                 _fsmetadata.add_file_metadata(_file_metadata)
                 start_response('200 OK', [('Content-type', 'text/plain')])
                 return [json.dumps(_result).encode('utf-8')]
+          print(_result)
           _result=''
           start_response('404 OK', [('Content-type', 'text/plain')])
           return [json.dumps(_result).encode('utf-8')]
@@ -169,10 +171,10 @@ def MetadataNode(environ, start_response):
           _dir_id, _shaID=_cmd[8:].split('/')
 
           _result=_fsmetadata.rmfile(_dir_id, _shaID)
-          if _fsmetadata.get_file_locations(_shaID)==[]:
+          #if _fsmetadata.get_file_locations(_shaID)==[]:
              #this file isn't in the metadata anymore so lets 
              #remove the segments
-             _fsmetadata.rmfile(_shaID)
+             #_fsmetadata.rmfile(_shaID)
 
           if _result is None:
              start_response('200 OK', [('Content-type', 'text/plain')])
@@ -185,8 +187,9 @@ def MetadataNode(environ, start_response):
        return [json.dumps('').encode('utf-8')]
 
 
-def contact_ServerNodes(interval):
+def refresh_grid(interval):
     while 1:
+       _fsmetadata.refresh()
        _segmentLocator.refresh()
        time.sleep(interval)
 
@@ -194,7 +197,7 @@ def contact_ServerNodes(interval):
 _mdn, _port=_config.get_MDN_Address()
 
 import threading
-_t=threading.Timer(10, contact_ServerNodes, [10])
+_t=threading.Timer(10, refresh_grid, [10])
 _t.start()
 
 try:

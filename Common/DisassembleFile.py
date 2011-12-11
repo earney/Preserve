@@ -91,11 +91,11 @@ class ZfecParameterCalculator:
        #k and m.
 
        #for now, just go with some basic defaults
-       self._k=5
-       self._m=10
+       self._k=10
+       self._m=15
 
    def get_parameters(self):
-       return 5, 10
+       return 10, 15
        #return {'k': self._k, 'm': self._m}
 
 
@@ -139,9 +139,10 @@ class DisassembleFile:
          _seq=0
          _blocks=[]
          for _segment in _segments:
-             _sha=hashlib.new('sha1')
-             _sha.update(_segment)
-             _segmentID=_sha.hexdigest()
+             _segmentID=misc.get_shaID(_segment)
+             #_sha=hashlib.new('sha1')
+             #_sha.update(_segment)
+             #_segmentID=_sha.hexdigest()
              _restoreBlock=False
              if _seq >= _k:
                 _restoreBlock=True

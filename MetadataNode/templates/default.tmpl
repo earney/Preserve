@@ -1,23 +1,23 @@
 <html>
 <head>
   <title>Preserve Monitor</title>
-
 </head>
 
 <body>
-
-<table>
+<h1>Storage Nodes</h1>
+<table border="1">
   <thead><tr><th>Name/Ip Address</th>
              <th>Last Seen</th>
+             <th>Time Delta</th>
              <th>Number of Segments</th>
              <th>Free Space</th>
              <th>Used Space</th>
          </tr>
   </thead>
   <tbody>
-     <py-open code="for node in nodes:"/>
+     <py-open code="for node in storagenodes:"/>
         <tr>
-        <py-open>for var in ('name', 'timestamp', 'number_segments', 'free', 'used'):</py-open>
+        <py-open>for var in ('name', 'timestamp', 'timedelta', 'number_segments', 'free', 'used'):</py-open>
            <td> <py-expr>node[var]</py-expr> </td>
         <py-close/>
         </tr>
@@ -25,6 +25,44 @@
   </tbody>
 </table>
 
+<p>
+<h1>Metadata Nodes</h1>
+<table border="1">
+  <thead><tr><th>Name/Ip Address</th>
+             <th>Last Seen</th>
+             <th>CheckPoint</th>
+         </tr>
+  </thead>
+  <tbody>
+     <py-open code="for node in metadatanodes:"/>
+        <tr>
+        <py-open>for var in ('name', 'timestamp', 'checkpoint'):</py-open>
+           <td> <py-expr>node[var]</py-expr> </td>
+        <py-close/>
+        </tr>
+     <py-close/>
+  </tbody>
+</table>
+
+<p>
+<h1>Missing Segments/Files</h1>
+<table border="1">
+  <thead><tr><th>SegmentID</th>
+             <th>File shaID</th>
+         </tr>
+  </thead>
+  <tbody>
+     <py-open code="for node in missingsegments:"/>
+        <tr>
+        <py-open>for var in ('segmentID', 'shaID'):</py-open>
+           <td> <py-expr>node[var]</py-expr> </td>
+        <py-close/>
+        </tr>
+     <py-close/>
+  </tbody>
+</table>
+
+<p>
 Last updated: $last_updated
 </body>
 </html>
