@@ -43,13 +43,16 @@ def register_with_metadataNode(mdn_handler):
         if last_contact_with_metadatanode + 2*last_contact_interval < time.time():
            # we haven't heard from Metadata Node in a while so lets
            # re register..
+           print("start:trying to access Metadata node")
            _data=mdn_handler.send_message("/StorageNode/Register/%s" % (_myaddr))
+           print("stop:trying to access Metadata node")
+
            #_fp=urllib.request.urlopen("http://%s/StorageNode/Register/%s" % (ipaddr, _myaddr))
            #_data=_fp.read()  #should we receive variables to update?
            #_fp.close()       #ie, interval, MDN addresses?
       except:
         pass
-      time.sleep(last_contact_interval)
+        time.sleep(last_contact_interval)
 
 def StorageNode(environ, start_response):
     global last_contact_with_metadatanode
