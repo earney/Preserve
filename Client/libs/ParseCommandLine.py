@@ -9,17 +9,17 @@ import DisassembleFile
 import misc
 
 class ParseCommandLine:
-   def __init__(self, metadataNodes, encryption=False, seed="myDIR"):
+   def __init__(self, mdn_handler, encryption=False, seed="myDIR"):
        #for now default to first metadatanode in list but eventually create
        #function to find working master metadata node, etc
-       self._metadataNode=metadataNodes[0]
+       self._mdn_handler=mdn_handler
        self._encryption=encryption
        self._seed=seed
        self._sys_args=[]
 
        #TODO: don't use a name mapper, encrypt name instead, that way
        #only private key is necessary to have.
-       self._name_mapper=NameMapper.NameMapper(encryption=encryption, metadataNode=self._metadataNode)
+       self._name_mapper=NameMapper.NameMapper(self._mdn_handler)
 
    def __del__(self):
        del self._name_mapper
@@ -75,8 +75,10 @@ class ParseCommandLine:
    def _dir_output(self, command, parentID, name_id, name):
        if self._encryption:
           name=None
-       _url="http://%s/Client/%s/%s/%s/%s" % (self._metadataNode, command, parentID, name_id, name)
-       _result=misc.access_url(_url)
+       #_url="http://%s/Client/%s/%s/%s/%s" % (self._metadataNode, command, parentID, name_id, name)
+       _result=self._mdn_handler.send_message('/Client/%s/%s/%s/%s' % (command, parentID, name_id, name))
+
+       #_result=misc.access_url(_url)
        if command in ('mkdir') and _result is None:
           return None
        return json.loads(_result.decode('utf-8'))
@@ -151,8 +153,9 @@ class ParseCommandLine:
           return "Error, ls not supported on non grid directories"
         
    def _ls_output(self, dir_id):
-       _url="http://%s/Client/listdir/%s" % (self._metadataNode, dir_id)
-       _result=misc.access_url(_url)
+       #_url="http://%s/Client/listdir/%s" % (self._metadataNode, dir_id)
+       #_result=misc.access_url(_url)
+       _result=self._mdn_handler.send_message('/Client/listdir/%s' % dir_id)
        _result=json.loads(_result.decode('utf-8'))
 
        _items={}
@@ -196,8 +199,9 @@ class ParseCommandLine:
    def _rm_file(self, filename):
        _dirID, _shaID=self._lookup_fileID(filename)
        if _shaID is not None:
-          _url="http://%s/Client/rmfile/%s/%s" % (self._metadataNode, _dirID, _shaID)
-          _result=misc.access_url(_url)
+          #_url="http://%s/Client/rmfile/%s/%s" % (self._metadataNode, _dirID, _shaID)
+          #_result=misc.access_url(_url)
+          _result=self._mdn_handler.send_message('/Client/rmfile/%s/%s' % (_dirID, _shaID))
           if _result is None:
              _result=''
           #_result=json.loads(_result.encode('utf-8'))

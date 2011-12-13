@@ -16,33 +16,44 @@ import sys
 sys.path.append("../Common")
 import misc
 import SegmentStorage
+import Config
+import MetadataNodeHandler
 
-_base_path='/tmp/MyGrid'
-_quota=1024*1024*1024*10 # 1GB
+_config=Config.Config()
+_mdn=_config.get_MetadataNodes()
 
-_ss=SegmentStorage.SegmentStorage(_base_path, _quota)
-_si=StorageInfo.StorageInfo(_base_path, _quota)
+_storage_address, _storage_port=_config.get_SN_Address()
+_storage_path=_config.get_SN_Path()
+_quota=_config.get_SN_Quota()
 
-MetadataNode_ipaddr="127.0.0.1:9696"
-_myaddr="127.0.0.1:9697"
+#_base_path='/tmp/MyGrid'
+#_quota=1024*1024*1024*10 # 1GB
+
+_ss=SegmentStorage.SegmentStorage(_storage_path, _quota)
+_si=StorageInfo.StorageInfo(_storage_path, _quota)
+
+_myaddr='%s:%s' % (_storage_address, _storage_port)
 
 last_contact_with_metadatanode=0
+last_contact_interval=60  #60 seconds
 
-def register_with_metadataNode(ipaddr, interval):
+def register_with_metadataNode(mdn_handler):
     while 1:
       try:
-        if last_contact_with_metadatanode + 2*interval < time.time():
+        if last_contact_with_metadatanode + 2*last_contact_interval < time.time():
            # we haven't heard from Metadata Node in a while so lets
            # re register..
-           _fp=urllib.request.urlopen("http://%s/StorageNode/Register/%s" % (ipaddr, _myaddr))
-           _data=_fp.read()
-           _fp.close()
+           _data=mdn_handler.send_message("/StorageNode/Register/%s" % (_myaddr))
+           #_fp=urllib.request.urlopen("http://%s/StorageNode/Register/%s" % (ipaddr, _myaddr))
+           #_data=_fp.read()  #should we receive variables to update?
+           #_fp.close()       #ie, interval, MDN addresses?
       except:
         pass
-      time.sleep(interval)
+      time.sleep(last_contact_interval)
 
 def StorageNode(environ, start_response):
     global last_contact_with_metadatanode
+    global last_contact_interval
 
     _path_info=environ['PATH_INFO']
 
@@ -56,8 +67,6 @@ def StorageNode(environ, start_response):
 
        _valid, _data=_ss.Get(_id)
 
-       #print(_valid)
-       #print(_data)
        if not _valid:
           headers = [('Content-type', 'text/plain')]
           start_response('404 OK', headers)
@@ -71,6 +80,7 @@ def StorageNode(environ, start_response):
        _ip=environ['REMOTE_ADDR']
 
        last_contact_with_metadatanode=time.time()
+       #maybe retrieve interval and list of metadatanodes from server?
        #print("in info" + str(last_contact_with_metadatanode))
 
        _vars=_si.get_info()
@@ -108,13 +118,15 @@ def StorageNode(environ, start_response):
     start_response('404 OK', [('Content-type', 'text/plain')])
     return ['Error, must provide an action'.encode('utf-8')]
 
+mdn_handler=MetadataNodeHandler.MetadataNodeHandler(_mdn)
+
 import threading
-_t=threading.Timer(10, register_with_metadataNode, [MetadataNode_ipaddr, 10])
+_t=threading.Timer(1, register_with_metadataNode, [mdn_handler])
 _t.start()
 
 try:
-  httpd = make_server('', 9697, StorageNode)
-  print("Serving on port 9697...")
+  httpd = make_server(_storage_address, _storage_port, StorageNode)
+  print("Serving on port %s..." % _storage_port)
   httpd.serve_forever()
 except KeyboardInterrupt:
   pass

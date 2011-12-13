@@ -7,6 +7,8 @@ import configparser, os
 #[StorageNode]
 #Address=127.0.0.1
 #Port=9695
+#Path="~/.preserve/Storage"
+#Quota=107374182400   #100 GB
 
 #[MetaDataNode]
 #Address=127.0.0.1
@@ -32,9 +34,22 @@ class Config:
          self._StorageNodeAddress='0.0.0.0'
 
       if self._parser.has_option('StorageNode', 'Port'):
-         self._StorageNodePort=self._parser.get('StorageNode', 'Port')
+         try:
+           self._StorageNodePort=int(self._parser.get('StorageNode', 'Port'))
+         except:
+           self._StorageNodePort=9695
       else:
-         self._StorageNodePort='9695'
+         self._StorageNodePort=9695
+
+      if self._parser.has_option('StorageNode', 'StoragePath'):
+         self._StorageNodePath=self._parser.get('StorageNode', 'Path')
+      else:
+         self._StorageNodePath="~/.preserve/Storage"
+
+      if self._parser.has_option('StorageNode', 'Quota'):
+         self._StorageNodeQuota=self._parser.get('StorageNode', 'Quota')
+      else:
+         self._StorageNodeQuota=107374182400  #100 GB
 
       if self._parser.has_option('MetadataNode', 'Address'):
          self._MetadataNodeAddress=self._parser.get('MetadataNode', 'Address')
@@ -66,6 +81,12 @@ class Config:
 
   def get_SN_Address(self):
       return self._StorageNodeAddress, self._StorageNodePort
+
+  def get_SN_Path(self):
+      return self._StorageNodePath
+
+  def get_SN_Quota(self):
+      return self._StorageNodeQuota
 
   def get_MDN_Address(self):
       return self._MetadataNodeAddress, self._MetadataNodePort
