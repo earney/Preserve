@@ -39,7 +39,7 @@ class ParseCommandLine:
 
    def _valid_command(self, s):
        #todo add rm, mv
-       if s in ('cd', 'ls', 'mkdir', 'rmdir', 'cp', 'rm'):
+       if s in ('cd', 'ls', 'mkdir', 'rmdir', 'cp', 'rm', 'mv'):
           return True
        return False 
 
@@ -63,6 +63,8 @@ class ParseCommandLine:
           return self._cp_input()
        elif command=='rm':
           return self._rm_input()
+       elif command=='mv':
+          return self._mv_input()
        else:
           return "Error! command %s is not valid" % command
 
@@ -104,37 +106,84 @@ class ParseCommandLine:
 
        return None, None, None
 
+   def _xx_grid2grid(self, command, source, target):
+       _dirID1, _shaID1=self._lookup_fileID(source)
+       print("%s, %s, %s" % (source[5:], _dirID1, _shaID1))
+       _head, _tail=os.path.split(target[5:])
+       print("%s,%s,%s" % (target, _head, _tail))
+       _dirID2=self._lookup_id(_head)
 
-   def _cp_input(self):
+       if _tail=='' and command=='cp':
+          #copy the filename from the source
+          _, _tail=os.path.split(_source[5:])
+
+       return self._mdn_handler.send_message('/Client/%s/%s/%s/%s/%s' % (command, _dirID1, _shaID1, _dirID2, _tail))
+
+
+   def _mv_input(self):
        if len(self._sys_args) != 4:
-          return "Error.. invalid syntax!\nClient.py cp <source> <target>"
+          return "Error.. invalid syntax!\preserve.py cp <source> <target>"
 
        _source=self._sys_args[2]
        _target=self._sys_args[3]
 
-       _cp_type=None
        if _source.startswith("grid:/") and _target.startswith("grid:/"):
-          #grid to grid
-          #just have to copy metadata 
-          #_cp_type="gridtogrid"
-          pass
+          #move file within grid
+          _result=self._xx_grid2grid("mv", _source, _target)
+          if _result is None:  #the move worked!
+             _result=self._rm_file()
        elif _source.startswith("grid:/"):
-          #copy file out of grid
-          #lookup id of source file
-          _id=self._lookup_id(_source)
+          #move file/dir out of grid
+          _id=self._lookup_id(source)
           import AssembleFile
           _as=AssembleFile.AssembleFile(self._metadataNode)
-          return _as.process(_id, _target)
+          _result=_as.process(_id, target)
+          if _result is None:
+             #remove dir/file in grid
+             return self._rm_file(_filename)
+          return "Error! copying dir/file out of grid failed"
        elif _target.startswith("grid:/"):
-          #copy file into the grid
+          #move file/dir into grid
           _target_dir, _target_name=os.path.split(_target[5:])
           _parentID=self._lookup_id(_target_dir)
           _df=DisassembleFile.DisassembleFile(_source, _parentID, _target_name, 
                                               self._metadataNode)
+          _result=_df.process()
+          if _result is None:
+             import shutil
+             shutil.remove(_source)
+             return None
+          return "Error! Trouble copying file into grid"
+       return "Error! source and/or target must start with grid:/"
+
+
+   def _cp_input(self):
+       if len(self._sys_args) != 4:
+          return "Error.. invalid syntax!\preserve.py cp <source> <target>"
+
+       _source=self._sys_args[2]
+       _target=self._sys_args[3]
+
+       if _source.startswith("grid:/") and _target.startswith("grid:/"):
+          #grid to grid
+          #just have to copy metadata
+          return self._xx_grid2grid('cp', _source, _target)
+       elif _source.startswith("grid:/"):
+          #copy file out of grid
+          #lookup id of source file
+          _id=self._lookup_id(source)
+          import AssembleFile
+          _as=AssembleFile.AssembleFile(self._metadataNode)
+          return _as.process(_id, target)
+       elif _target.startswith("grid:/"):
+          #copy file into the grid
+          _target_dir, _target_name=os.path.split(target[5:])
+          _parentID=self._lookup_id(target_dir)
+          _df=DisassembleFile.DisassembleFile(source, _parentID, _target_name, 
+                                              self._metadataNode)
           return _df.process()
 
        return "Error! source and/or target must start with grid:/"
-
 
    def _ls_input(self):
        try:
@@ -158,32 +207,20 @@ class ParseCommandLine:
        _result=self._mdn_handler.send_message('/Client/listdir/%s' % dir_id)
        _result=json.loads(_result.decode('utf-8'))
 
-       _items={}
-       _items['FILE']={}
-       _items['DIR']={}
-       for _dict in _result:
-           _items[_dict['type']][_dict['name']]=_dict
-
        _str='\n'
-       for _type in ('DIR', 'FILE'):
-           _dirs=list(_items[_type].keys())
-           _dirs.sort()
-           #print out directory contents
-           for _dir in _dirs:
-               _dict=_items[_type][_dir]
-               #size  modified time, name"
-               #print(_dir)
-               try:
-                 _time_sec=int(_items[_type][_dir]['modified'])
-                 _date_time=time.ctime(_time_sec)
-               except:
-                 _date_time=''
-               _padding=' '*(25-len(_date_time))
-               _str+="%s %s %10d %s %s %s\n" % (_type[0], _dict['id'], _dict['size'], _date_time, _padding, _dict['name'])
+       for _dict in _result:
+           try:
+             _time_sec=int(_dict['modified'])
+             _date_time=time.ctime(_time_sec)
+           except:
+             _date_time=''
+
+           _padding=' '*(25-len(_date_time))
+           _padding1=' '*(5-len(_dict['type']))
+           _str+="%s%s%s %10d %s %s %s\n" % (_dict['type'], _padding1, _dict['id'], _dict['size'], _date_time, _padding, _dict['name'])
 
        return _str
  
-   #todo
    def _lookup_id(self, path):
        #send path to metadatanode and expect a dir_id (or null if 
        #it doesn't exist
@@ -218,14 +255,3 @@ class ParseCommandLine:
        _shaID=self._lookup_id(pathfile[5:])
 
        return _parentID, _shaID
-       
-
-   #def _cp_object(self, object1, object2):
-   #    #get dirID (and possibliy shaID, if file) of object 1
-   #    pass
-
-if __name__=='__main__':
-   _pcl=ParseCommandLine("127.0.0.1:9696")
-   _cmd="prog ls grid:/"
-   _args=_cmd.split()
-   print(_pcl.process_command(_args))

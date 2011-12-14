@@ -10,7 +10,7 @@ class CircularList:
         self._data.append(x)
 
     def next(self):
-        if self._cur==len(self._data):
+        if self._cur==len(self._data)-1:
            self._cur=-1
 
         self._cur+=1

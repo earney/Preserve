@@ -113,8 +113,20 @@ def MetadataNode(environ, start_response):
              start_response('200 OK', [('Content-type', 'text/plain')])
           return [json.dumps(_result).encode('utf-8')]
        elif _cmd.startswith('/rmdir/'):
-          _parentID, _id, _name=_cmd[7:].split('/',3)
+          _parentID, _id, _name=_cmd[7:].split('/',2)
           _result=_fsmetadata.rmdir(_parentID, _id, _name)
+          start_response('200 OK', [('Content-type', 'text/plain')])
+          return [json.dumps(_result).encode('utf-8')]
+       elif _cmd.startswith('/cp/'):
+            #copy metadata within the grid (ie, from grid location to grid location)
+          _parentID, _shaID, _target_dir_id, _name=_cmd[4:].split('/',3)
+          _result=_fsmetadata.cp(_parentID, _shaID, _target_dir_id, _name)
+          start_response('200 OK', [('Content-type', 'text/plain')])
+          return [json.dumps(_result).encode('utf-8')]
+       elif _cmd.startswith('/mv/'):
+            #copy metadata within grid
+          _parentID, _shaID, _target_dir_id, _name=_cmd[4:].split('/',3)
+          _result=_fsmetadata.cp(_parentID, _shaID, _target_dir_id, _name)
           start_response('200 OK', [('Content-type', 'text/plain')])
           return [json.dumps(_result).encode('utf-8')]
        elif _cmd.startswith('/mkdir/'):

@@ -94,6 +94,11 @@ class FileSystemMetadata:
           _db.commit()
           _db.close()
 
+   #to get the correct fileID, we need to pass the parent ID
+   #but what about 2 files inthe same directory with the same shaid?
+   #this isn't unique. ..  FUCK!!!
+   #encrypt filename and send parentID/encrypted_filename
+   #this should always be unique
    def _shaID2fileID(self, conn, shaID):
        conn.execute("select id from attributes where shaID=?", (shaID,))
        try:
@@ -334,6 +339,83 @@ class FileSystemMetadata:
 
        _db.close()
        return "Error, file already exists"
+
+
+   def cp(self, parentID, shaID, target_dir_id, name):
+       """copy metadata from one location to another"""
+
+       _db=sqlite3.connect(self._DBFile)
+       _conn=_db.cursor()
+
+       _parentID=self._shaID2fileID(_conn, parentID)
+       _target_dir_id=self._shaID2fileID(_conn, target_dir_id)
+
+
+       _conn.execute("""select count(a.id)
+                                  from attributes a,
+                                       directory_contents b
+                                 where a.id=b.childID
+                                   and b.parentID=?
+                                   and a.name=?""", (_target_dir_id, name,))
+
+       _count,=_conn.fetchone()
+       if _count!=0:  # we don't have a child with this name, so we can create it
+          return "Error! target already exists!"
+
+       _conn.execute("""select a.type, a.size
+                          from attributes a,
+                               directory_contents b
+                         where a.id=b.childID
+                           and b.parentID=?
+                           and a.shaID=?""", (_parentID, shaID))
+       try:
+         _type, _size,=_conn.fetchone()
+       except:
+         print("%s,%s,%s" % (_parentID, shaID, name))
+         return "Error! Source is not valid"
+       _new_id=self._get_new_id()
+       _conn.execute("""insert into attributes 
+                             values (?, ?,?,?,?,?)""", (_new_id, shaID, _type, name, _size, int(time.time())))
+ 
+       _conn.execute("""insert into directory_contents
+                               values (?,?)""", (_target_dir_id, _new_id,))
+       _db.commit()
+       _db.close()
+
+       return None
+
+
+   def mv(self, parentID, shaID, target_dir_id, name):
+       """mv metadata from one location to another"""
+
+       _db=sqlite3.connect(self._DBFile)
+       _conn=_db.cursor()
+
+       _parentID=self._shaID2fileID(_conn, parentID)
+       _target_dir_id=self._shaID2fileID(_conn, target_dir_id)
+
+
+       _conn.execute("""select count(a.id)
+                                  from attributes a,
+                                       directory_contents b
+                                 where a.id=b.childID
+                                   and b.parentID=?
+                                   and a.shaID=?""", (_parentID, shaID,))
+
+       _count,=_conn.fetchone()
+       if _count==0:  # we don't have a child with this name, so we can create it
+          return "Error! source doesn't exist"
+
+       _conn.execute("""update directory_contents
+                           set parentID=?
+                         where parentID=?
+                           and childID=?""", (_target_dir_id, _parentID, _id))
+ 
+       _db.commit()
+       _db.close()
+
+       return None
+
 
    def rmfile(self, dir_id, shaID):
        #print(dir_id, shaID)

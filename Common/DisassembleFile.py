@@ -166,15 +166,9 @@ class DisassembleFile:
 
        _json=json.dumps(_metadata).encode('utf-8')
 
-       _shaID=misc.get_shaID(_json)
+       #_shaID=misc.get_shaID(_json)
 
        _url="http://%s/Client/putfile/%s/%s" % (self._metadataNode, 
                  self._parentID, self._grid_filename)
        _result=misc.access_url(_url, data=_json)
        return _result
-
-if __name__ == '__main__':
-   _df=DisassembleFile("/home/earney/Desktop/temp/Training_Academy.wmv",
-                       "127.0.0.1:9696")
-
-   print(_df.process())
