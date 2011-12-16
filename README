@@ -1,4 +1,4 @@
-RoadMap - 10/31/2011
+RoadMap - 12/15/2011
 
 0.x - create basic storage node, meetadata node, and client, which will
       allow basic functionality needed for a basic distributed file system.
@@ -22,7 +22,6 @@ RoadMap - 10/31/2011
 
 2.0 - all functions implemented are considered stable.
 
-2.x - add encryption capabilities and allow ability to remove filenames
-      from metadata node and store those locally so that other
-      untrusted nodes cannot read sensitive data.
+2.x - add filename encryption (and file content encryption).
+      so that untrusted nodes cannot read sensitive data.
 
