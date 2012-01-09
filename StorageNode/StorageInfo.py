@@ -4,7 +4,7 @@ sys.path.append("../Common")
 import CacheHelper
 
 class StorageInfo(CacheHelper.CacheHelper):
-   def __init__(self, base_path, quota, cache_time=300):
+   def __init__(self, base_path, quota, cache_time=30):
        CacheHelper.CacheHelper.__init__(self, cache_time)
        self._worker=StorageInfoWorker(base_path, quota)
 
@@ -36,6 +36,8 @@ class StorageInfoWorker:
            for _file in _files:
                _filename = os.path.join(_root, _file)
                _size += os.path.getsize(_filename)
+       print(self._base_path)
+       print(_size)
        return _size
 
    def get_segment_list(self):

@@ -42,14 +42,19 @@ class Config:
          self._StorageNodePort=9695
 
       if self._parser.has_option('StorageNode', 'StoragePath'):
-         self._StorageNodePath=self._parser.get('StorageNode', 'Path')
+         self._StorageNodePath=os.path.expanduser(self._parser.get('StorageNode', 'StoragePath'))
       else:
-         self._StorageNodePath="~/.preserve/Storage"
+         self._StorageNodePath=os.path.expanduser("~/.preserve/Storage")
 
       if self._parser.has_option('StorageNode', 'Quota'):
          self._StorageNodeQuota=self._parser.get('StorageNode', 'Quota')
       else:
          self._StorageNodeQuota=107374182400  #100 GB
+
+      if self._parser.has_option('StorageNode', 'CertFile'):
+         self._SN_CertFile=os.path.expanduser(self._parser.get('StorageNode', 'CertFile'))
+      else:
+         self._SN_CertFile=None
 
       if self._parser.has_option('MetadataNode', 'Address'):
          self._MetadataNodeAddress=self._parser.get('MetadataNode', 'Address')
@@ -61,26 +66,34 @@ class Config:
       else:
          self._MetadataNodePort='9696'
 
-      if self._parser.has_option('MetadataNode', 'SegmentLocatorDB'):
-         self._SegmentLocatorDB=self._parser.get('MetadataNode', 'SegmentLocatorDB')
+      if self._parser.has_option('MetadataNode', 'CertFile'):
+         self._MDN_CertFile=os.path.expanduser(self._parser.get('MetadataNode', 'CertFile'))
       else:
-         self._SegmentLocatorDB="~/.preserve/SegmentLocator.db"
+         self._MDN_CertFile=None
+
+      if self._parser.has_option('MetadataNode', 'SegmentLocatorDB'):
+         self._SegmentLocatorDB=os.path.expanduser(self._parser.get('MetadataNode', 'SegmentLocatorDB'))
+      else:
+         self._SegmentLocatorDB=os.path.expanduser("~/.preserve/SegmentLocator.db")
 
       if self._parser.has_option('MetadataNode', 'FileSystemDirectory'):
-         self._FileSystemDirectory=self._parser.get('MetadataNode', 'FileSystemDirectory')
+         self._FileSystemDirectory=os.path.expanduser(self._parser.get('MetadataNode', 'FileSystemDirectory'))
       else:
-         self._FileSystemDirectory="~/.preserve/MDN/"
+         self._FileSystemDirectory=os.path.expanduser("~/.preserve/MDN/")
 
       if self._parser.has_option('MetadataNode', 'FileSystemDB'):
-         self._FileSystemDB=self._parser.get('MetadataNode', 'FileSystemDB')
+         self._FileSystemDB=os.path.expanduser(self._parser.get('MetadataNode', 'FileSystemDB'))
       else:
-         self._FileSystemDB="~/.preserve/FS.db"
+         self._FileSystemDB=os.path.expanduser("~/.preserve/FS.db")
 
   def get_MetadataNodes(self):
       return self._MetadataNodes
 
   def get_SN_Address(self):
       return self._StorageNodeAddress, self._StorageNodePort
+
+  def get_SN_CertFile(self):
+      return self._SN_CertFile
 
   def get_SN_Path(self):
       return self._StorageNodePath
@@ -99,3 +112,6 @@ class Config:
 
   def get_MDN_FileSystemDB(self):
       return self._FileSystemDB
+
+  def get_MDN_CertFile(self):
+      return self._MDN_CertFile

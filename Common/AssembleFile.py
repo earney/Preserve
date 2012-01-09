@@ -9,8 +9,8 @@ import misc
 import FileVerifier
 
 class AssembleFile:
-   def __init__(self, metadataNode):
-       self._metadataNode=metadataNode
+   def __init__(self, mdn_handler):
+       self._mdn_handler=mdn_handler
 
        self._decoder_k=0
        self._decoder_m=0
@@ -18,8 +18,9 @@ class AssembleFile:
        self._data=[]
 
    def _get_metadata(self, shaID):
-       _url="http://%s/Client/getfile/%s" % (self._metadataNode, shaID)
-       _result=misc.access_url(_url)
+       _result=self._mdn_handler.send_message('/Client/getfile/%s' % shaID)
+       #_url="http://%s/Client/getfile/%s" % (self._metadataNode, shaID)
+       #_result=misc.access_url(_url)
        #print(isinstance(_result, bytes))
        _metadata=misc.receive_compressed_response(_result)
        #return _metadata.decode('utf-8')
@@ -54,7 +55,8 @@ class AssembleFile:
 
        _json=misc.send_compressed_response(_all_segments)
 
-       _result=misc.access_url("http://%s/Client/locate_segments" % self._metadataNode, data=_json)
+       _result=self._mdn_handler.send_message('/Client/locate_segments', data=_json)
+       #_result=misc.access_url("http://%s/Client/locate_segments" % self._metadataNode, data=_json)
        return misc.receive_compressed_response(_result)
 
    def process(self, shaID, output_filename):
@@ -94,7 +96,7 @@ class AssembleFile:
               _missing_segments.append(_segment)
 
            for _nodeID in locations[_segment]:
-               _data=misc.access_url("http://%s/GetSegment/%s" % (_nodeID, _segment))
+               _data=misc.access_url("https://%s/GetSegment/%s" % (_nodeID, _segment))
 
                if _data is not None:
                   if self._is_verified(_segment, _data):
@@ -121,7 +123,7 @@ class AssembleFile:
              _segment=_restore_segments.pop(0)
 
              for _nodeID in locations[_segment]:
-                 _data=misc.access_url("http://%s/GetSegment/%s" % (_nodeID, _segment))
+                 _data=misc.access_url("https://%s/GetSegment/%s" % (_nodeID, _segment))
 
                  if _data is not None:
                     #need to verify that _data == _segmentID

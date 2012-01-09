@@ -32,7 +32,7 @@ class MetadataNodeHandler:
       _fail=True
       _old_cur=None
       while _fail:
-        _url='http://%s%s' % (self._current_mdn, urlpath)
+        _url='https://%s%s' % (self._current_mdn, urlpath)
         try:
           if data is None:
              _fp = urllib.request.urlopen(_url)

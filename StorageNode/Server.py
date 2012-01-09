@@ -3,7 +3,8 @@
 ## start a node, and read the storage directory to see which segments we have
 ## if the directory doesn't, create those directories
 
-from wsgiref.simple_server import make_server
+#from wsgiref.simple_server import make_server
+
 
 import json
 import time
@@ -18,6 +19,9 @@ import misc
 import SegmentStorage
 import Config
 import MetadataNodeHandler
+#from wsgissl import SecureWSGIServer, SecureWSGIRequestHandler
+
+from cherrypy import wsgiserver
 
 _config=Config.Config()
 _mdn=_config.get_MetadataNodes()
@@ -26,8 +30,7 @@ _storage_address, _storage_port=_config.get_SN_Address()
 _storage_path=_config.get_SN_Path()
 _quota=_config.get_SN_Quota()
 
-#_base_path='/tmp/MyGrid'
-#_quota=1024*1024*1024*10 # 1GB
+_cert=_config.get_SN_CertFile()
 
 _ss=SegmentStorage.SegmentStorage(_storage_path, _quota)
 _si=StorageInfo.StorageInfo(_storage_path, _quota)
@@ -44,15 +47,11 @@ def register_with_metadataNode(mdn_handler):
            # we haven't heard from Metadata Node in a while so lets
            # re register..
            print("start:trying to access Metadata node")
-           _data=mdn_handler.send_message("/StorageNode/Register/%s" % (_myaddr))
+           mdn_handler.send_message("/StorageNode/Register/%s" % (_myaddr))
            print("stop:trying to access Metadata node")
-
-           #_fp=urllib.request.urlopen("http://%s/StorageNode/Register/%s" % (ipaddr, _myaddr))
-           #_data=_fp.read()  #should we receive variables to update?
-           #_fp.close()       #ie, interval, MDN addresses?
       except:
         pass
-        time.sleep(last_contact_interval)
+      time.sleep(last_contact_interval)
 
 def StorageNode(environ, start_response):
     global last_contact_with_metadatanode
@@ -87,15 +86,10 @@ def StorageNode(environ, start_response):
        #print("in info" + str(last_contact_with_metadatanode))
 
        _vars=_si.get_info()
+       print(_vars)
        _headers=[('Content-type', 'application/json')]
        start_response('200 OK', _headers)
        return [misc.send_compressed_response(_vars)]
-       #_json=json.dumps(_vars)
-
-       #import gzip
-       #_gzip_json=gzip.compress(_json.encode('utf-8'))  
-       #return [_json.encode('utf-8')]
-       #return [_gzip_json]
 
     elif _path_info.startswith('/PutSegment'):
        _id=misc.inspect_id(_path_info[12:])
@@ -127,12 +121,36 @@ import threading
 _t=threading.Timer(1, register_with_metadataNode, [mdn_handler])
 _t.start()
 
+print(_storage_address, _storage_port)
+print(_cert)
+_server = wsgiserver.CherryPyWSGIServer((_storage_address, _storage_port), 
+                                        StorageNode)
+
+#The CherryPy WSGI server can serve as many WSGI applications
+#as you want in one instance by using a WSGIPathInfoDispatcher:
+
+# interesting idea..  implement this later :)
+#    d = WSGIPathInfoDispatcher({'/': my_crazy_app, '/blog': my_blog_app})
+#    server = wsgiserver.CherryPyWSGIServer(('0.0.0.0', 80), d)
+
+#Want SSL support? Just set these attributes:
+
+_server.ssl_adapter=wsgiserver.ssl_builtin.BuiltinSSLAdapter(_cert, _cert)
+
 try:
-  httpd = make_server(_storage_address, _storage_port, StorageNode)
-  print("Serving on port %s..." % _storage_port)
-  httpd.serve_forever()
+  _server.start()
 except KeyboardInterrupt:
-  pass
+  _server.stop()
+
+#try:
+#  _httpd=make_server(_storage_address, _storage_port, StorageNode,
+#                     server_class=SecureWSGIServer, 
+#                     handler_class=SecureWSGIRequestHandler)
+#  print("Serving on port %s..." % _storage_port)
+#  _httpd.set_credentials(keypath=_cert, certpath=_cert)
+#  _httpd.serve_forever()
+#except KeyboardInterrupt:
+#  pass
 
 del _ss
 del _si

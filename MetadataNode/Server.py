@@ -5,7 +5,7 @@
 ## to contact them.
 ## if not, just wait until they register with us.
 
-from wsgiref.simple_server import make_server
+#from wsgiref.simple_server import make_server
 from cgi import parse_qs, escape
 
 import json, time, datetime
@@ -22,12 +22,14 @@ import FileSystemMetadata
 sys.path.append("../Common")
 import misc
 import Config
+#from wsgissl import SecureWSGIServer, SecureWSGIRequestHandler
+from cherrypy import wsgiserver
 
 _config=Config.Config()
-#_base_path='/tmp/MyGrid'
 _sldb=_config.get_MDN_SegmentLocatorDB()
 _fsdir=_config.get_MDN_FileSystemDirectory()
 _fsdb=_config.get_MDN_FileSystemDB()
+_cert=_config.get_MDN_CertFile()
 
 _segmentLocator=SegmentLocator.SegmentLocator(_sldb)
 _fsmetadata=FileSystemMetadata.FileSystemMetadata(metadataDir=_fsdir,
@@ -212,12 +214,27 @@ import threading
 _t=threading.Timer(10, refresh_grid, [10])
 _t.start()
 
+print(_mdn, _port)
+_server=wsgiserver.CherryPyWSGIServer((_mdn, int(_port)), MetadataNode)
+
+_server.ssl_adapter=wsgiserver.ssl_builtin.BuiltinSSLAdapter(_cert, _cert)
+
 try:
-  httpd = make_server(_mdn, int(_port), MetadataNode)
-  print("Serving on port %s..." % _port)
-  httpd.serve_forever()
+  _server.start()
 except KeyboardInterrupt:
-  pass
+  _server.stop()
+
+
+#try:
+#  _httpd = make_server(_mdn, int(_port), MetadataNode,
+#                       server_class=SecureWSGIServer, 
+#                       handler_class=SecureWSGIRequestHandler)
+
+#  print("Serving on port %s..." % _port)
+#  _httpd.set_credentials(keypath=_cert, certpath=_cert)
+#  _httpd.serve_forever()
+#except KeyboardInterrupt:
+#  pass
 
 del _segmentLocator
 del _fsmetadata

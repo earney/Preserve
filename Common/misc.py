@@ -47,7 +47,7 @@ def access_url(url, data=None):
 
 
 def send_compressed_response(results):
-    _json=json.dumps(results).encode('utf-8')
+    _json=json.dumps(results).replace('\n', '').encode('utf-8')
     return gzip.compress(_json)
 
 def receive_compressed_response(results):

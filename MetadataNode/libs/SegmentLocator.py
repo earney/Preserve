@@ -200,8 +200,9 @@ class SegmentLocator:
        #contact node and get info from them..
        _data=None
        try:
-         _url="http://%s/Info" % ipaddr
-         _fp=urllib.request.urlopen(_url)  
+         _url="https://%s/Info" % ipaddr
+         print(_url)
+         _fp=urllib.request.urlopen(_url)
          _data=_fp.read()
          _fp.close()
        except urllib.request.HTTPError as e:

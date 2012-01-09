@@ -11,8 +11,8 @@ sys.path.append("../Common/")
 import misc
 
 class UploadFile:
-   def __init__(self, metadatanode, refresh_stats_time=120):
-       self._metadatanode=metadatanode
+   def __init__(self, mdn_handler, refresh_stats_time=120):
+       self._mdn_handler=mdn_handler
        self._last_contact=0
        self._refresh_stats_time=refresh_stats_time
        self._storage_stats={}
@@ -26,13 +26,15 @@ class UploadFile:
           self._last_contact=time.time()
           #need to update our stats of the Storage nodes so we know
           #where we should put more segments.
-          _url="http://%s/Client/getStorageNodeStatistics" % self._metadatanode
-          _fp = urllib.request.urlopen(_url)
-          _data=_fp.read()
+          _result=self._mdn_handler.send_message('/Client/getStorageNodeStatistics')
+          #_url="https://%s/Client/getStorageNodeStatistics" % self._metadatanode
+          #_fp = urllib.request.urlopen(_url)
+          #_data=_fp.read()
           #print(_data)
-          _fp.close()
+          #_fp.close()
 
-          self._storage_stats=json.loads(_data.decode('utf-8'))
+          self._storage_stats=json.loads(_result.decode('utf-8'))
+          #self._storage_stats=json.loads(_data.decode('utf-8'))
           if self._storage_stats=={}:
              print("Error! no storage nodes returned")
 
@@ -78,7 +80,7 @@ class UploadFile:
           self._best_nodes=[]
 
        #put data on given node.
-       _url="http://%s/PutSegment/%s" % (_node, segmentID)
+       _url="https://%s/PutSegment/%s" % (_node, segmentID)
        _result=misc.access_url(_url, data=data)
        return _result
 
@@ -101,15 +103,17 @@ class ZfecParameterCalculator:
 
 class DisassembleFile:
    def __init__(self, filename, parentID, grid_filename, 
-                metadataNode, group_size=10*1024*1024):
+                mdn_handler, group_size=10*1024*1024):
        self._filename=filename
        self._group_size=group_size
 
-       self._metadataNode=metadataNode
+       self._mdn_handler=mdn_handler
+       #self._metadataNode=metadataNode
        self._parentID=parentID
        self._grid_filename=grid_filename
 
-       self._upload_file=UploadFile(metadataNode)
+       #self._upload_file=UploadFile(metadataNode)
+       self._upload_file=UploadFile(mdn_handler)
 
    def process(self):
        #fix this, each group should be in its own list for easier processing
@@ -168,7 +172,8 @@ class DisassembleFile:
 
        #_shaID=misc.get_shaID(_json)
 
-       _url="http://%s/Client/putfile/%s/%s" % (self._metadataNode, 
-                 self._parentID, self._grid_filename)
-       _result=misc.access_url(_url, data=_json)
+       _result=self._mdn_handler.send_message('/Client/putfile/%s/%s' % (self._parentID, self._grid_filename), data=_json)
+       #_url="https://%s/Client/putfile/%s/%s" % (self._metadataNode, 
+       #          self._parentID, self._grid_filename)
+       #_result=misc.access_url(_url, data=_json)
        return _result

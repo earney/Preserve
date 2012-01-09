@@ -27,7 +27,7 @@ class ParseCommandLine:
    def process_command(self, args):
        self._sys_args=args
 
-       if len(args) < 1:
+       if len(args) < 2:
           return "Error!, must provide command"
 
        #Client <command> <command line options>
@@ -136,7 +136,7 @@ class ParseCommandLine:
           #move file/dir out of grid
           _id=self._lookup_id(source)
           import AssembleFile
-          _as=AssembleFile.AssembleFile(self._metadataNode)
+          _as=AssembleFile.AssembleFile(self._mdn_handler)
           _result=_as.process(_id, target)
           if _result is None:
              #remove dir/file in grid
@@ -147,7 +147,7 @@ class ParseCommandLine:
           _target_dir, _target_name=os.path.split(_target[5:])
           _parentID=self._lookup_id(_target_dir)
           _df=DisassembleFile.DisassembleFile(_source, _parentID, _target_name, 
-                                              self._metadataNode)
+                                              self._mdn_handler)
           _result=_df.process()
           if _result is None:
              import shutil
@@ -171,16 +171,21 @@ class ParseCommandLine:
        elif _source.startswith("grid:/"):
           #copy file out of grid
           #lookup id of source file
-          _id=self._lookup_id(source)
+          _id=self._lookup_id(_source)
+          if _id is None: #file doesn't exist in grid!
+             return "Error! file %s does not exist" % _source
           import AssembleFile
-          _as=AssembleFile.AssembleFile(self._metadataNode)
-          return _as.process(_id, target)
+          _as=AssembleFile.AssembleFile(self._mdn_handler)
+          #TODO
+          #need to check if target exists, if so, maybe prompt user
+          #to over write?
+          return _as.process(_id, _target)
        elif _target.startswith("grid:/"):
           #copy file into the grid
-          _target_dir, _target_name=os.path.split(target[5:])
-          _parentID=self._lookup_id(target_dir)
-          _df=DisassembleFile.DisassembleFile(source, _parentID, _target_name, 
-                                              self._metadataNode)
+          _target_dir, _target_name=os.path.split(os.path.expanduser(_target[5:]))
+          _parentID=self._lookup_id(_target_dir)
+          _df=DisassembleFile.DisassembleFile(_source, _parentID, _target_name, 
+                                              self._mdn_handler)
           return _df.process()
 
        return "Error! source and/or target must start with grid:/"
