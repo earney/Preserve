@@ -1,0 +1,33 @@
+from : http://roland.entierement.nu/blog/2012/01/15/looking-for-the-ultimate-distributed-filesystem.html
+
+The requirements on the ultimate distributed filesystem (which I'll call UDFS for short, otherwise you'll get bored and go look at pictures of kittens) are as follows:
+
+Availability means redundancy: some of the storage nodes will be on dedicated 
+ servers in datacenters, others at home; I can imagine setting up the firewall
+ so that the home computers are reachable from outside, but sometimes network
+ links go down, and the home computers are far from being on 100% of the time.
+
+Availability/redundancy also means automated replication and rebalancing: if 
+ a node is added to the “grid” (or switched on), it should automatically get 
+ its share of the files so as to contribute to availability if another node
+ goes down at a later time.
+
+Confidentiality: at the very least, network communications must be encrypted 
+ and authenticated; ideally, individual storage nodes wouldn't need to be able 
+ to access the stored data. If I store bits of my backups on a friend's server,
+ I don't want to have to trust them not to look at the data; also, my friend may actually want to be unable to look at my data (to provide for 
+ deniability in case someone else wants to look at it).
+
+Performance: native disk performance may not be realistically reachable, but 
+ the system must be smart enough (or configurable enough) to store files on
+ both sides of the ADSL link, for instance, so not all accesses need to go
+ through the bottleneck.
+
+Integration with the system: I want a filesystem, not a storage system. All 
+ applications know how to navigate a mounted filesystem; very few will 
+ interface with an specific application designed to store and fetch chunks 
+ of data.
+
+Scalability would be nice, although my personal needs are still well below the
+ terabyte range and I can't see myself using more than a dozen nodes or so.
+
